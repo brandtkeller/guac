@@ -27,6 +27,7 @@ import (
 	"github.com/guacsec/guac/pkg/logging"
 	"github.com/pkg/errors"
 	"github.com/regclient/regclient"
+	"github.com/regclient/regclient/config"
 	"github.com/regclient/regclient/types/errs"
 )
 
@@ -46,6 +47,7 @@ type ociRegistryCollector struct {
 // NewOCIRegistryCollector initializes the oci registry collector that will collect from all
 // repos in the given registry
 func NewOCIRegistryCollector(ctx context.Context, collectDataSource datasource.CollectSource, poll bool, interval time.Duration, rcOpts ...regclient.Opt) *ociRegistryCollector {
+	logging.FromContext(ctx).Info("oci registry collector created")
 	if rcOpts == nil {
 		rcOpts = getRegClientOptions()
 	}
@@ -60,7 +62,9 @@ func NewOCIRegistryCollector(ctx context.Context, collectDataSource datasource.C
 
 // RetrieveArtifacts get the artifacts from all repositories in the registry based on polling or one time
 func (o *ociRegistryCollector) RetrieveArtifacts(ctx context.Context, docChannel chan<- *processor.Document) error {
+	logger := logging.FromContext(ctx)
 	if o.poll {
+		logger.Infof("Polling for artifacts every %s", o.interval.String())
 		for {
 			if err := o.retrieveRegistryArtifacts(ctx, docChannel); err != nil {
 				return fmt.Errorf("failed to retrieve registry artifacts: %w", err)
@@ -73,6 +77,7 @@ func (o *ociRegistryCollector) RetrieveArtifacts(ctx context.Context, docChannel
 			}
 		}
 	} else {
+		logger.Info("Retrieving artifacts once")
 		if err := o.retrieveRegistryArtifacts(ctx, docChannel); err != nil {
 			return fmt.Errorf("failed to retrieve registry artifacts: %w", err)
 		}
@@ -88,10 +93,22 @@ func (o *ociRegistryCollector) retrieveRegistryArtifacts(ctx context.Context, do
 		return fmt.Errorf("unable to retrieve datasource: %w", err)
 	}
 
+	logger.Infof("data sources: %+v", ds)
+
+	h := config.Host{
+		Name: "127.0.0.1:5001",   // or dev-registry:5000
+		TLS:  config.TLSDisabled, // <<— key line
+	}
+
+	opt := regclient.WithConfigHost([]config.Host{h}...)
+
+	o.rcOpts = append(o.rcOpts, opt)
 	rc := regclient.New(o.rcOpts...)
+	logger.Infof("regclient created with options: %v", rc)
 
 	// Process each registry from the data sources
 	for _, r := range ds.OciRegistryDataSources {
+		logger.Infof("Processing registry %s", r.Value)
 		registry := r.Value
 		// Get list of repositories in the registry
 		repos, err := o.listRepositories(ctx, rc, registry)
@@ -99,6 +116,8 @@ func (o *ociRegistryCollector) retrieveRegistryArtifacts(ctx context.Context, do
 			logger.Errorf("failed to list repositories for registry %s: %v", registry, err)
 			continue
 		}
+
+		logger.Infof("Found %d repositories in registry %s", len(repos), registry)
 
 		// Create new data source for repositories
 		repoSources := make([]datasource.Source, len(repos))

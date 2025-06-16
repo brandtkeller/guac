@@ -119,6 +119,7 @@ func getCollectorPublish(ctx context.Context, blobStore *blob.BlobStore, pubsub 
 
 func initializeNATsandCollector(ctx context.Context, pubsubAddr string, blobAddr string, publishToQueue bool) {
 	logger := logging.FromContext(ctx)
+	logger.Info("initializing NATS and collector")
 
 	// initialize blob store
 	blobStore, err := blob.NewBlobStore(ctx, blobAddr)

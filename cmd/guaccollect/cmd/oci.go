@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"time"
 
@@ -136,15 +135,20 @@ var ociRegistryCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		logger.Infof("collecting from registry %s", args[0])
+		datasources, err := opts.dataSource.GetDataSources(ctx)
+		logger.Infof("datasources: %v", datasources)
+
 		// Register collector
 		// We probably want a much longer poll interval for registry collectors as the _catalog
 		// endpoint can be expensive to hit and likely won't change often.
-		ociRegistryCollector := oci.NewOCIRegistryCollector(ctx, opts.dataSource, opts.poll, 30*time.Minute)
+		ociRegistryCollector := oci.NewOCIRegistryCollector(ctx, opts.dataSource, opts.poll, 1*time.Minute)
+		logger.Info("Create new oci registry collector")
 		err = collector.RegisterDocumentCollector(ociRegistryCollector, oci.OCIRegistryCollector)
 		if err != nil {
 			logger.Errorf("unable to register oci collector: %v", err)
 		}
-
+		logger.Infof("Successfully registered oci registry collector %v", ociRegistryCollector)
 		initializeNATsandCollector(ctx, opts.pubsubAddr, opts.blobAddr, opts.publishToQueue)
 	},
 }
@@ -243,10 +247,10 @@ func validateOCIRegistryFlags(
 	sources := []datasource.Source{}
 	for _, arg := range args {
 		// Min check to validate registry by resolving hostname
-		_, err := net.LookupHost(arg)
-		if err != nil {
-			return opts, fmt.Errorf("registry parsing error. require format registry:port")
-		}
+		// _, err := net.LookupHost(arg)
+		// if err != nil {
+		// 	return opts, fmt.Errorf("registry parsing error. require format registry:port")
+		// }
 		sources = append(sources, datasource.Source{
 			Value: arg,
 		})
@@ -254,7 +258,7 @@ func validateOCIRegistryFlags(
 
 	var err error
 	opts.dataSource, err = inmemsource.NewInmemDataSources(&datasource.DataSources{
-		OciDataSources: sources,
+		OciRegistryDataSources: sources,
 	})
 	if err != nil {
 		return opts, err

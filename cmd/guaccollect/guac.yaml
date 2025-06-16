@@ -1,0 +1,72 @@
+# arangodb 
+arango-user: root
+arango-pass: test123
+arango-addr: http://localhost:8529
+
+# Neo4j details
+neo4j-user: neo4j
+neo4j-pass: s3cr3t
+neo4j-addr: neo4j://localhost:7687
+neo4j-realm: neo4j
+
+# Neptune details
+# Populate neptune-endpoint, neptune-port and neptune-region with accurate values.
+neptune-user: username
+neptune-endpoint: localhost
+neptune-port: 8182
+neptune-region: us-east-1
+neptune-realm: neptune
+
+# pubsub setup
+pubsub-addr: nats://localhost:4222
+publish-to-queue: true
+
+# blob store setup. Setup with blob store of choice via https://gocloud.dev/howto/blob/
+blob-addr: s3://bucketname?endpoint=http://localhost:9000&region=us-east-1&disable_https=true&use_path_style=true
+
+# certifier interval
+interval: 20m
+
+# number of hours since the last scan was run. 0 means run on all packages/sources
+last-scan: 4
+
+# set the batch size for the package pagination query
+certifier-batch-size: 60000
+# add artificial latency to throttle the certifier
+certifier-latency: ""
+
+# deps.dev
+# add artificial latency to throttle deps.dev
+deps-dev-latency: ""
+
+# query vulnerability during ingestion
+add-vuln-on-ingest: false
+
+# add metadata to vulnerabilities during ingestion
+add-vuln-metadata: false
+
+# query licenses during ingestion
+add-license-on-ingest: false
+
+# query eol during ingestion
+add-eol-on-ingest: false
+
+# CSub setup
+csub-addr: localhost:2782
+csub-listen-port: 2782
+
+# GQL setup
+gql-backend: keyvalue
+gql-listen-port: 8080
+gql-debug: true
+gql-test-data: false
+gql-addr: http://localhost:8080/query
+
+# REST API setup
+rest-api-server-port: 8081
+
+# Collector behavior
+service-poll: true
+use-csub: false
+
+log-level: Info
