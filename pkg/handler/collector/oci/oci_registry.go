@@ -95,9 +95,10 @@ func (o *ociRegistryCollector) retrieveRegistryArtifacts(ctx context.Context, do
 
 	logger.Infof("data sources: %+v", ds)
 
+	// hardcode zarf registry for now to disable tls
 	h := config.Host{
-		Name: "127.0.0.1:5001",   // or dev-registry:5000
-		TLS:  config.TLSDisabled, // <<— key line
+		Name: "zarf-docker-registry.zarf.svc.cluster.local:5000",
+		TLS:  config.TLSDisabled,
 	}
 
 	opt := regclient.WithConfigHost([]config.Host{h}...)
